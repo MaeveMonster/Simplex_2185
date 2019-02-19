@@ -110,7 +110,7 @@ void Application::ProcessKeyReleased(sf::Event a_event)
 		m_pMesh->GenerateTube(1.0f, 0.7f, 1.0f, 10, C_CYAN);
 		break;
 	case sf::Keyboard::F8:
-		m_pMesh->GenerateSphere(1.0f, 5, C_CYAN);
+		m_pMesh->GenerateSphere(1.0f, 100, C_CYAN);
 		break;
 	case sf::Keyboard::F9:
 		m_pMesh->GenerateTorus(1.0f, 0.6f, 10, 10, C_CYAN);
@@ -395,8 +395,8 @@ void Application::CameraRotation(float a_fSpeed)
 		fAngleX += fDeltaMouse * a_fSpeed;
 	}
 	//Change the Yaw and the Pitch of the camera
-	m_pCameraMngr->ChangeYaw(fAngleY * 0.25f);
-	m_pCameraMngr->ChangePitch(-fAngleX * 0.25f);
+	m_pCameraMngr->ChangeYaw(fAngleY * 3.0f);
+	m_pCameraMngr->ChangePitch(-fAngleX * 3.0f);
 	SetCursorPos(CenterX, CenterY);//Position the mouse in the center
 }
 //Keyboard
@@ -462,10 +462,8 @@ void Application::ProcessJoystick(void)
 #pragma endregion
 #pragma region Camera Orientation
 	//Change the Yaw and the Pitch of the camera
-	float fUSpeed = glm::radians(m_pController[m_uActCont]->axis[SimplexAxis_U] / 150.0f);
-	float fVSpeed = glm::radians(m_pController[m_uActCont]->axis[SimplexAxis_V] / 150.0f);
-	m_pCameraMngr->ChangeYaw(-fUSpeed);
-	m_pCameraMngr->ChangePitch(fVSpeed);
+	m_pCameraMngr->ChangeYaw(-m_pController[m_uActCont]->axis[SimplexAxis_U] / 150.0f);
+	m_pCameraMngr->ChangePitch(m_pController[m_uActCont]->axis[SimplexAxis_V] / 150.0f);
 #pragma endregion
 #pragma region ModelOrientation Orientation
 	m_qArcBall = quaternion(vector3(glm::radians(m_pController[m_uActCont]->axis[SimplexAxis_POVY] / 20.0f), 0.0f, 0.0f)) * m_qArcBall;

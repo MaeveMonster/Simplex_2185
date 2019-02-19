@@ -1,5 +1,5 @@
 /*----------------------------------------------
-Programmer: Alberto Bobadilla (labigm@gmail.com)
+Programmer: Katie Roy (kmr8172@g.rit.edu)
 Date: 2017/05
 ----------------------------------------------*/
 #ifndef __MYMESH_H_
@@ -211,6 +211,15 @@ public:
 	OUTPUT: ---
 	*/
 	void GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Color = C_WHITE);
+	/*
+	USAGE: Generates a Circle mesh
+	ARGUMENTS:
+	-    float a_fRadius -> radius of the circle
+	-    int a_nSubdivisions -> Number of divisions
+	-    a_v3Color -> color of the mesh
+	OUTPUT: ---
+	*/
+	void GenerateCircle(vector3 a_v3Center, float a_fRadius, int a_nSubdivisions, vector3 a_v3Color);
 #pragma endregion
 };
 
