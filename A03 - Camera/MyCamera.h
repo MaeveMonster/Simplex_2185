@@ -9,11 +9,12 @@ Date: 2018/09
 
 namespace Simplex
 {
-
 class MyCamera
 {
+	vector3 m_v3Orientation = vector3(); //the orientation of the camera
 	vector3 m_v3Position = vector3(0.0f, 0.0f, 10.0f); //Where my camera is located
 	vector3 m_v3Target = vector3(0.0f, 0.0f, 0.0f); //What I'm looking at
+	vector3 m_v3ForwardVector = vector3(m_v3Target-m_v3Position); //the forward vector of camera, the way the camera is facing
 	vector3 m_v3Above = vector3(0.0f, 1.0f, 0.0f); //What is above the camera
 
 	bool m_bPerspective = true; //perspective view? False is Orthographic
@@ -230,6 +231,20 @@ public:
 	OUTPUT: ---
 	*/
 	void MoveSideways(float a_fDistance = 0.1f);
+
+	/*
+	USAGE: changes the yaw
+	ARGUMENTS: float a_fAngleY the angle of rotation
+	OUTPUT: ---
+	*/
+	void ChangeYaw(float a_fAngleY);
+
+	/*
+	USAGE: changes the pitch
+	ARGUMENTS: float a_fAngleX the angle of rotation
+	OUTPUT: ---
+	*/
+	void ChangePitch(float a_fAngleX);
 };
 
 } //namespace Simplex

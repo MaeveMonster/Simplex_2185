@@ -1,4 +1,7 @@
 #include "MyCamera.h"
+
+//add changeYaw(y) and changePitch(x)
+//quatern in change yaw is angle 
 using namespace Simplex;
 
 //Accessors
@@ -152,11 +155,42 @@ void Simplex::MyCamera::CalculateProjectionMatrix(void)
 
 void MyCamera::MoveForward(float a_fDistance)
 {
-	//The following is just an example and does not take in account the forward vector (AKA view vector)
-	m_v3Position += vector3(0.0f, 0.0f,-a_fDistance);
-	m_v3Target += vector3(0.0f, 0.0f, -a_fDistance);
-	m_v3Above += vector3(0.0f, 0.0f, -a_fDistance);
+	//calculate with forward vector to move in direction camera is facing
+	m_v3Position += (glm::normalize(m_v3ForwardVector) * a_fDistance); 
+	m_v3Target += (glm::normalize(m_v3ForwardVector) * a_fDistance);
+	m_v3Above += (glm::normalize(m_v3ForwardVector) * a_fDistance);
 }
 
-void MyCamera::MoveVertical(float a_fDistance){}//Needs to be defined
-void MyCamera::MoveSideways(float a_fDistance){}//Needs to be defined
+void MyCamera::MoveVertical(float a_fDistance)
+{
+	m_v3Position += vector3(0.0f, -a_fDistance, 0.0f);
+	m_v3Target += vector3(0.0f, -a_fDistance, 0.0f);
+	m_v3Above += vector3(0.0f, -a_fDistance, 0.0f);
+}
+
+void MyCamera::MoveSideways(float a_fDistance)
+{
+	//calculate with cross of forward vector and yAxis to move left and right based on the direction the camera is facing
+	m_v3Position += (glm::normalize(glm::cross(m_v3ForwardVector, AXIS_Y)) * a_fDistance); 
+	m_v3Target += (glm::normalize(glm::cross(m_v3ForwardVector, AXIS_Y)) * a_fDistance);
+	m_v3Above += (glm::normalize(glm::cross(m_v3ForwardVector, AXIS_Y)) * a_fDistance);
+}
+
+
+void MyCamera::ChangeYaw(float a_fAngleY)
+{
+	//quaternion to prevent gimbal lock
+	quaternion quaternion = glm::angleAxis(a_fAngleY, AXIS_Y); 
+	m_v3ForwardVector = m_v3Target - m_v3Position;
+	m_v3Orientation = m_v3ForwardVector * quaternion;
+	m_v3Target = m_v3Position + m_v3Orientation;
+}
+
+void MyCamera::ChangePitch(float a_fAngleX)
+{
+	//quaternion to prevent gimbal lock
+	quaternion quaternion = glm::angleAxis(a_fAngleX, glm::cross(m_v3ForwardVector, AXIS_Y));
+	m_v3ForwardVector = m_v3Target - m_v3Position;
+	m_v3Orientation = m_v3ForwardVector * quaternion;
+	m_v3Target = m_v3Position + m_v3Orientation;
+}
