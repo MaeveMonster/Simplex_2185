@@ -287,6 +287,113 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	(eSATResults::SAT_NONE has a value of 0)
 	*/
 
+	float ra, rb;
+	matrix3 R;
+	matrix3 absR;
+	glm::vec3 otherT;
+	glm::vec3 thisT;
+	vector3 uOther[3] = { vector3(a_pOther->GetModelMatrix() * vector4(AXIS_X, 1)), vector3(a_pOther->GetModelMatrix() * vector4(AXIS_Y, 1)), vector3(a_pOther->GetModelMatrix() * vector4(AXIS_Z, 1)) };
+	vector3 uThis[3] = { vector3(this->GetModelMatrix() * vector4(AXIS_X, 1)), vector3(this->GetModelMatrix() * vector4(AXIS_Y, 1)), vector3(this->GetModelMatrix() * vector4(AXIS_Z, 1)) };
+
+	//uOther is the orientation axis of the rigid body minus the translation matrix
+	glm::decompose(a_pOther->GetModelMatrix(), glm::vec3(), glm::quat(), otherT, glm::vec3(), glm::vec4());
+	for (int i = 0; i < 3; i++) {
+		uOther[i] -= otherT;
+	}
+	
+	glm::decompose(this->GetModelMatrix(), glm::vec3(), glm::quat(), thisT, glm::vec3(), glm::vec4());
+	for (int i = 0; i < 3; i++) {
+		uThis[i] -= thisT;
+	}
+
+	//sets the imprtant bits of R to the dot product of the u for this and the u for other
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			R[i][j] = glm::dot(uThis[i], uOther[j]);
+		}
+	}
+
+	//t is a vector3 calculated by the center of the other rigid body minus this rigid body, then the dot product of t and this rigid body
+	vector3 t = a_pOther->GetCenterGlobal() - this->GetCenterGlobal();
+	t = vector3(glm::dot(t, uThis[0]), glm::dot(t, uThis[1]), glm::dot(t, uThis[2]));
+
+	//sets each bit of absR to the absolute value of r and corrects for rounding error
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			absR[i][j] = abs(R[i][j]) + 0.00000001f;
+		}
+	}
+
+	// Test axes L = A0, L = A1, L = A2
+	for (int i = 0; i < 3; i++) {
+		ra = this->GetHalfWidth()[i];
+		rb = a_pOther->GetHalfWidth()[0] * absR[i][0] + a_pOther->GetHalfWidth()[1] * absR[i][1] + a_pOther->GetHalfWidth()[2] * absR[i][2];
+		if (abs(t[i]) > ra + rb)
+			return 1;
+	}
+
+	// Test axes L = B0, L = B1, L = B2
+	for (int i = 0; i < 3; i++) {
+		ra = this->GetHalfWidth()[0] * absR[i][0] + this->GetHalfWidth()[1] * absR[i][1] + this->GetHalfWidth()[2] * absR[i][2];
+		rb = a_pOther->GetHalfWidth()[i];
+		if (abs(t[0] * R[0][i] + t[1] * R[1][i] + t[2] * R[2][i]) > ra + rb)
+			return 1;
+	}
+
+	// Test axis L = A0 x B0
+	ra = this->GetHalfWidth()[1] * absR[2][0] + this->GetHalfWidth()[2] * absR[1][0];
+	rb = a_pOther->GetHalfWidth()[1] * absR[0][2] + a_pOther->GetHalfWidth()[2] * absR[0][1];
+	if (abs(t[2] * R[1][0] - t[1] * R[2][0]) > ra + rb) 
+		return 1;
+
+	// Test axis L = A0 x B1
+	ra = this->GetHalfWidth()[1] * absR[2][1] + this->GetHalfWidth()[2] * absR[1][1];
+	rb = a_pOther->GetHalfWidth()[0] * absR[0][2] + a_pOther->GetHalfWidth()[2] * absR[0][0];
+	if (abs(t[2] * R[1][1] - t[1] * R[2][1]) > ra + rb) 
+		return 1;
+
+	// Test axis L = A0 x B2
+	ra = this->GetHalfWidth()[1] * absR[2][2] + this->GetHalfWidth()[2] * absR[1][2];
+	rb = a_pOther->GetHalfWidth()[0] * absR[0][1] + a_pOther->GetHalfWidth()[1] * absR[0][0];
+	if (abs(t[2] * R[1][2] - t[1] * R[2][2]) > ra + rb) 
+		return 1;
+
+	// Test axis L = A1 x B0
+	ra = this->GetHalfWidth()[0] * absR[2][0] + this->GetHalfWidth()[2] * absR[0][0];
+	rb = a_pOther->GetHalfWidth()[1] * absR[1][2] + a_pOther->GetHalfWidth()[2] * absR[1][1];
+	if (abs(t[0] * R[2][0] - t[2] * R[0][0]) > ra + rb) 
+		return 1;
+
+	// Test axis L = A1 x B1
+	ra = this->GetHalfWidth()[0] * absR[2][1] + this->GetHalfWidth()[2] * absR[0][1];
+	rb = a_pOther->GetHalfWidth()[0] * absR[1][2] + a_pOther->GetHalfWidth()[2] * absR[1][0];
+	if (abs(t[0] * R[2][1] - t[2] * R[0][1]) > ra + rb) 
+		return 1;
+
+	// Test axis L = A1 x B2
+	ra = this->GetHalfWidth()[0] * absR[2][2] + this->GetHalfWidth()[2] * absR[0][2];
+	rb = a_pOther->GetHalfWidth()[0] * absR[1][1] + a_pOther->GetHalfWidth()[1] * absR[1][0];
+	if (abs(t[0] * R[2][2] - t[2] * R[0][2]) > ra + rb) 
+		return 1;
+
+	// Test axis L = A2 x B0
+	ra = this->GetHalfWidth()[0] * absR[1][0] + this->GetHalfWidth()[1] * absR[0][0];
+	rb = a_pOther->GetHalfWidth()[1] * absR[2][2] + a_pOther->GetHalfWidth()[2] * absR[2][1];
+	if (abs(t[1] * R[0][0] - t[0] * R[1][0]) > ra + rb) 
+		return 1;
+
+	// Test axis L = A2 x B1
+	ra = this->GetHalfWidth()[0] * absR[1][1] + this->GetHalfWidth()[1] * absR[0][1];
+	rb = a_pOther->GetHalfWidth()[0] * absR[2][2] + a_pOther->GetHalfWidth()[2] * absR[2][0];
+	if (abs(t[1] * R[0][1] - t[0] * R[1][1]) > ra + rb) 
+		return 1;
+
+	// Test axis L = A2 x B2
+	ra = this->GetHalfWidth()[0] * absR[1][2] + this->GetHalfWidth()[1] * absR[0][2];
+	rb = a_pOther->GetHalfWidth()[0] * absR[2][1] + a_pOther->GetHalfWidth()[1] * absR[2][0];
+	if (abs(t[1] * R[0][2] - t[0] * R[1][2]) > ra + rb) 
+		return 1;
+
 	//there is no axis test that separates this two objects
-	return eSATResults::SAT_NONE;
+	return 0;
 }
